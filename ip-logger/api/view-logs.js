@@ -3,22 +3,19 @@ export const config = {
   runtime: 'edge',
 };
 
-// Wir simulieren eine Datei, indem wir den Inhalt in einer Variable speichern.
-// In einer echten Anwendung würdest du eine Datenbank wie KV oder D1 verwenden.
-// Für diesen einfachen Fall ist das aber ausreichend und funktioniert zuverlässig.
+// Diese Variable speichert die Logs im Speicher der Funktion.
 let logFileContent = '';
 
 export default async function handler(request) {
-  // Wenn die Funktion mit POST aufgerufen wird (von log.js)
+  // Wenn die Funktion mit POST aufgerufen wird (von log.js), speichere den Eintrag.
   if (request.method === 'POST') {
     const newLogEntry = await request.text();
-    logFileContent += newLogEntry;
+    logFileContent += newLogEntry + '\n'; // Zeilenumbruch hinzufügen
     return new Response('Log saved.', { status: 200 });
   }
 
-  // Wenn die Funktion mit GET aufgerufen wird (von dir im Browser)
+  // Wenn die Funktion mit GET aufgerufen wird (von dir im Browser), zeige die Logs.
   if (request.method === 'GET') {
-    // Gib die gesammelten Logs als formatierte HTML-Seite aus.
     const htmlContent = `
       <!DOCTYPE html>
       <html>
