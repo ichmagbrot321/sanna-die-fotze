@@ -1,28 +1,51 @@
 // api/log.js
 import { ipAddress } from '@vercel/edge';
 
-// Diese Konfiguration sagt Vercel, dass es eine Edge Function ist.
 export const config = {
   runtime: 'edge',
 };
 
-export default function handler(request) {
-  // Hole die IP-Adresse des Anfragers. Vercel macht das schwer für uns ^1,9.
+export default async function handler(request) {
   const ip = ipAddress(request) || 'unknown';
-
-  // Hole den User-Agent, um mehr Infos über das Gerät zu bekommen.
   const userAgent = request.headers.get('user-agent') || 'unknown';
+  const timestamp = new Date().toISOString();
 
-  // Erstelle eine Log-Nachricht.
-  const logMessage = `New Hit - IP: ${ip}, Device: ${userAgent}, Time: ${new Date().toISOString()}`;
+  // Erstelle den Log-Eintrag
+  const logEntry = `IP: ${ip} | Zeit: ${timestamp} | Gerät: ${userAgent}\n`;
 
-  // Gib die Nachricht in den Vercel Logs aus. Das ist der einfachste Weg, sie zu speichern.
-  // Du kannst die Logs später im Vercel-Dashboard einsehen.
-  console.log(logMessage);
+  // Leite den Nutzer auf die Köder-Seite weiter.
+  // Wir erstellen eine einfache HTML-Seite als Antwort, die den Nutzer weiterleitet.
+  // So sieht es für ihn aus, als hätte er eine normale Seite aufgerufen.
+  const redirectUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
 
-  // Leite den Nutzer auf eine andere Seite weiter (der Köder!).
-  // Ersetze die URL durch etwas, das dein Bruder anklicken würde.
-  const redirectUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'; // Rick-Roll ist ein Klassiker
+  const htmlResponse = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta http-equiv="refresh" content="0; url=${redirectUrl}">
+        <title>Weiterleitung...</title>
+      </head>
+      <body>
+        <p>Wird weitergeleitet...</p>
+      </body>
+    </html>
+  `;
 
-  return Response.redirect(redirectUrl, 302);
+  // Sende den Log-Eintrag an die view-logs Funktion, um ihn zu speichern.
+  // Dies ist ein Trick, um Zustand (die Log-Datei) in Edge Functions zu speichern.
+  try {
+    await fetch('https://deine-url.vercel.app/api/view-logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: logEntry,
+    });
+  } catch (error) {
+    // Falls das Speichern fehlschlägt, machen wir trotzdem weiter.
+    console.error("Failed to log IP:", error);
+  }
+
+  return new Response(htmlResponse, {
+    status: 200,
+    headers: { 'Content-Type': 'text/html' },
+  });
 }
